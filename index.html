@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>Smiley’s Fresh Catch Game</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <!-- Fun, readable font -->
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700&display=swap" rel="stylesheet">
   <style>
     html, body {
@@ -37,6 +36,10 @@
       font-size: 2rem;
       color: #4caf50;
       text-align: center;
+      transition: background 0.5s;
+    }
+    #overlay.end {
+      background: linear-gradient(135deg, #e0ffd6 60%, #b2f7c5 100%) !important;
     }
     #overlay h1, #overlay h2 {
       color: #ff9800;
@@ -55,19 +58,19 @@
       display: inline-block;
       margin-top: 1em;
       padding: 10px 30px;
-      background: #ffeb3b;
-      color: #388e3c;
+      background: #81c784;
+      color: #fff;
       border-radius: 12px;
       font-size: 1.1em;
       font-weight: bold;
       text-decoration: none;
       box-shadow: 0 2px 8px #b8e99477;
-      border: 2px solid #a5e35b;
+      border: 2px solid #388e3c;
       transition: background 0.2s, color 0.2s;
     }
     #overlay a:hover {
-      background: #cddc39;
-      color: #212121;
+      background: #388e3c;
+      color: #fffde7;
     }
     #startBtn, #restartBtn {
       margin-top: 32px;
@@ -87,11 +90,11 @@
       background: #cddc39;
     }
     @media (max-width: 800px) {
-      #gameCanvas { width: 98vw !important; height: 70vw !important; }
+      #gameCanvas { width: 99vw !important; height: 85vw !important; }
       #overlay { font-size: 1.2rem; }
     }
     @media (max-width: 600px) {
-      #gameCanvas { width: 98vw !important; height: 98vw !important; }
+      #gameCanvas { width: 99vw !important; height: 120vw !important; }
       #overlay { font-size: 1.1rem; }
     }
   </style>
@@ -104,7 +107,7 @@
       Move your basket to catch <b style="color:#ff5722;">three of the same</b> fruit, veggie, or smoothie.<br>
       <span style="color:#f44336;">If you catch a different one as the third, you lose your basket!</span><br>
       <br>
-      <b style="color:#009688;">Score 1000 points to advance to the next level!</b><br>
+      <b style="color:#009688;" id="goalMsg"></b><br>
       <br>
       <span style="color:#1976d2;">Touch and drag</span> the basket to move.<br>
       <br>
@@ -117,11 +120,12 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    // Responsive canvas sizing
+    // Responsive canvas sizing - maximize vertical space, minimal bottom margin
     function resizeCanvas() {
       let ww = window.innerWidth, wh = window.innerHeight;
-      let cW = Math.min(ww * 0.98, 540);
-      let cH = Math.min(wh * 0.9, cW * 1.5, 900);
+      // Leave about 10px bottom margin for overscroll, fill rest
+      let cW = Math.min(ww * 0.99, 540);
+      let cH = Math.min(wh - 10, cW * 1.6, 950);
       canvas.width = cW;
       canvas.height = cH;
     }
@@ -134,7 +138,10 @@
       {name: "Banana", emoji: "🍌"},
       {name: "Carrot", emoji: "🥕"},
       {name: "Broccoli", emoji: "🥦"},
-      {name: "Apple", emoji: "🍏"},
+      {name: "Green Apple", emoji: "🍏"},
+      {name: "Red Apple", emoji: "🍎"},
+      {name: "Watermelon", emoji: "🍉"},
+      {name: "Mango", emoji: "🥭"},
       {name: "Smoothie", emoji: "🥤"}
     ];
     const GOLDEN_SMOOTHIE = {name: "Golden Smoothie", emoji: "✨🥤✨", golden: true};
@@ -183,6 +190,7 @@
       gameState = 'playing';
       resetGame();
       overlay.style.display = 'none';
+      overlay.classList.remove('end');
       requestAnimationFrame(gameLoop);
     }
 
@@ -207,11 +215,12 @@
 
     function endGame(won=false) {
       gameState = 'over';
+      overlay.classList.add('end');
       overlay.innerHTML = `
         <h1>${won ? "🎉 You Win! 🎉" : "Game Over"}</h1>
         <p>Your Score: <b style="color:#009688;">${score}</b></p>
         <p>${won ? "You are a Smiley’s Fresh Champion!" : "Try again to beat your high score!"}</p>
-        <p style="font-size:1.3em; color:#ff9800;">Don’t forget to get a smoothie at Smiley’s Fresh!<br>🍓🥦🍌🥤</p>
+        <p style="font-size:1.3em; color:#388e3c;">Don’t forget to get a smoothie at Smiley’s Fresh!<br>🍓🥦🍌🥤</p>
         <a href="https://smileys-fresh.com/" target="_blank">Visit Smiley’s Fresh!</a>
         <button id="restartBtn">Play Again</button>
       `;
@@ -219,11 +228,13 @@
       restartBtn = document.getElementById('restartBtn');
       restartBtn.onclick = () => {
         overlay.style.display = 'none';
+        overlay.classList.remove('end');
         startGame();
       };
     }
 
     function showPromo() {
+      overlay.classList.remove('end');
       overlay.innerHTML = `
         <h2>Level ${level+1} Complete!</h2>
         <p>Your Score: <b style="color:#009688;">${score}</b></p>
@@ -487,12 +498,19 @@
       resizeCanvas();
       resetGame();
       draw();
+      // Show goal for level 1 on start overlay
+      document.getElementById('goalMsg').innerHTML = 
+        `Score <span style="color:#ff5722;">${LEVELS[0].goal}</span> points to level up!`;
     });
 
     // --- Redraw on resize ---
     window.addEventListener('resize', () => {
       resetGame();
       draw();
+      if (gameState === 'start') {
+        document.getElementById('goalMsg').innerHTML = 
+          `Score <span style="color:#ff5722;">${LEVELS[0].goal}</span> points to level up!`;
+      }
     });
 
     // --- Draw initial screen ---
