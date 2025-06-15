@@ -133,7 +133,8 @@
     resizeCanvas();
 
     // --- GAME DATA ---
-    const ITEMS = [
+    // All the fruits!
+    const ALL_ITEMS = [
       {name: "Strawberry", emoji: "🍓"},
       {name: "Banana", emoji: "🍌"},
       {name: "Carrot", emoji: "🥕"},
@@ -142,14 +143,24 @@
       {name: "Red Apple", emoji: "🍎"},
       {name: "Watermelon", emoji: "🍉"},
       {name: "Mango", emoji: "🥭"},
+      {name: "Grape", emoji: "🍇"},
+      {name: "Orange", emoji: "🍊"},
+      {name: "Cherry", emoji: "🍒"},
+      {name: "Lemon", emoji: "🍋"},
+      {name: "Pineapple", emoji: "🍍"},
+      {name: "Blueberry", emoji: "🫐"},
       {name: "Smoothie", emoji: "🥤"}
     ];
     const GOLDEN_SMOOTHIE = {name: "Golden Smoothie", emoji: "✨🥤✨", golden: true};
 
+    // For each level, how many fruits to use
+    const LEVEL_FRUIT_COUNTS = [6, 9, 12, ALL_ITEMS.length];
+
+    // Level goals are easier!
     const LEVELS = [
-      {goal: 1000, speed: 2, dropRate: 60},
-      {goal: 1500, speed: 2.5, dropRate: 50},
-      {goal: 1750, speed: 3, dropRate: 40},
+      {goal: 400, speed: 2, dropRate: 60},
+      {goal: 800, speed: 2.5, dropRate: 50},
+      {goal: 1200, speed: 3, dropRate: 40},
       {goal: 2000, speed: 3.5, dropRate: 30}
     ];
     const LEVEL_TIME = 40; // seconds
@@ -175,10 +186,16 @@
     let restartBtn = null;
 
     // --- SMART FRUIT DROP LOGIC ---
+    function getCurrentItems() {
+      // Use more fruits as level increases
+      let count = LEVEL_FRUIT_COUNTS[Math.min(level, LEVEL_FRUIT_COUNTS.length-1)];
+      return ALL_ITEMS.slice(0, count);
+    }
     function getNextFruit() {
-      // If holding two of the same, 60% chance to drop the same fruit
+      const ITEMS = getCurrentItems();
+      // If holding two of the same, 80% chance to drop the same fruit
       if (basket.length === 2 && basket[0] === basket[1]) {
-        if (Math.random() < 0.6) {
+        if (Math.random() < 0.8) {
           return ITEMS.find(item => item.name === basket[0]);
         }
       }
@@ -406,8 +423,8 @@
       ctx.stroke();
       // Items in basket
       for (let i=0;i<basket.length;i++) {
-        let idx = ITEMS.findIndex(it=>it.name===basket[i]);
-        let emoji = idx>=0 ? ITEMS[idx].emoji : "❓";
+        let idx = ALL_ITEMS.findIndex(it=>it.name===basket[i]);
+        let emoji = idx>=0 ? ALL_ITEMS[idx].emoji : "❓";
         ctx.font = `${Math.round(canvas.height*0.045)}px 'Baloo 2', Arial, sans-serif`;
         ctx.fillText(emoji, -24+24*i, -10);
       }
