@@ -14,6 +14,27 @@
       user-select: none;
       overflow: hidden;
     }
+    #brand {
+      width: 100vw;
+      text-align: center;
+      font-family: 'Baloo 2', Arial, Helvetica, sans-serif;
+      font-size: 2.3em;
+      font-weight: bold;
+      letter-spacing: 3px;
+      color: #39ff14;
+      text-shadow:
+        0 0 8px #39ff14,
+        0 0 16px #39ff14,
+        0 0 24px #fff,
+        0 0 32px #00e6e6,
+        0 0 40px #00e6e6;
+      margin-top: 18px;
+      margin-bottom: 8px;
+      user-select: none;
+    }
+    @media (max-width: 600px) {
+      #brand { font-size: 1.5em; }
+    }
     #gameCanvas {
       background: linear-gradient(to bottom, #e0ffd6 0%, #fffbe0 100%);
       display: block;
@@ -100,6 +121,7 @@
   </style>
 </head>
 <body>
+  <div id="brand">Smiley’s Fresh</div>
   <canvas id="gameCanvas"></canvas>
   <div id="overlay" style="display:flex;">
     <h1>🍓 Smiley’s Fresh Catch 🍌</h1>
