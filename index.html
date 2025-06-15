@@ -4,11 +4,13 @@
   <meta charset="UTF-8">
   <title>Smiley’s Fresh Catch Game</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <!-- Fun, readable font -->
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700&display=swap" rel="stylesheet">
   <style>
     html, body {
       margin: 0; padding: 0; height: 100%; width: 100%;
       background: #f7ffe0;
-      font-family: 'Comic Sans MS', 'Comic Sans', cursive, sans-serif;
+      font-family: 'Baloo 2', Arial, Helvetica, sans-serif;
       touch-action: none;
       user-select: none;
       overflow: hidden;
@@ -17,10 +19,10 @@
       background: linear-gradient(to bottom, #e0ffd6 0%, #fffbe0 100%);
       display: block;
       margin: 0 auto;
-      touch-action: none;
       border: 4px solid #a5e35b;
       border-radius: 24px;
       box-shadow: 0 8px 32px #b8e99477;
+      touch-action: none;
     }
     #overlay {
       position: absolute;
@@ -36,6 +38,37 @@
       color: #4caf50;
       text-align: center;
     }
+    #overlay h1, #overlay h2 {
+      color: #ff9800;
+      font-size: 2.4em;
+      margin-bottom: 0.2em;
+      letter-spacing: 2px;
+      text-shadow: 2px 2px 0 #fff176, 0 2px 8px #b8e99477;
+    }
+    #overlay p, #overlay a {
+      color: #388e3c;
+      font-size: 1.2em;
+      margin: 0.5em 0;
+      text-shadow: 1px 1px 0 #fffde7;
+    }
+    #overlay a {
+      display: inline-block;
+      margin-top: 1em;
+      padding: 10px 30px;
+      background: #ffeb3b;
+      color: #388e3c;
+      border-radius: 12px;
+      font-size: 1.1em;
+      font-weight: bold;
+      text-decoration: none;
+      box-shadow: 0 2px 8px #b8e99477;
+      border: 2px solid #a5e35b;
+      transition: background 0.2s, color 0.2s;
+    }
+    #overlay a:hover {
+      background: #cddc39;
+      color: #212121;
+    }
     #startBtn, #restartBtn {
       margin-top: 32px;
       padding: 14px 36px;
@@ -47,30 +80,35 @@
       box-shadow: 0 2px 8px #b8e99477;
       cursor: pointer;
       font-family: inherit;
+      font-weight: bold;
       transition: background 0.2s;
     }
     #startBtn:hover, #restartBtn:hover {
       background: #cddc39;
     }
-    @media (max-width: 600px) {
-      #gameCanvas { width: 100vw !important; height: 70vw !important; }
+    @media (max-width: 800px) {
+      #gameCanvas { width: 98vw !important; height: 70vw !important; }
       #overlay { font-size: 1.2rem; }
+    }
+    @media (max-width: 600px) {
+      #gameCanvas { width: 98vw !important; height: 98vw !important; }
+      #overlay { font-size: 1.1rem; }
     }
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas" width="480" height="720"></canvas>
+  <canvas id="gameCanvas"></canvas>
   <div id="overlay" style="display:flex;">
     <h1>🍓 Smiley’s Fresh Catch 🍌</h1>
     <p>
-      Move your basket to catch <b>three of the same</b> fruit, veggie, or smoothie.<br>
+      Move your basket to catch <b style="color:#ff5722;">three of the same</b> fruit, veggie, or smoothie.<br>
       <span style="color:#f44336;">If you catch a different one as the third, you lose your basket!</span><br>
       <br>
-      <b>Score 1000 points to advance to the next level!</b><br>
+      <b style="color:#009688;">Score 1000 points to advance to the next level!</b><br>
       <br>
-      <b>Touch and drag</b> the basket to move.<br>
+      <span style="color:#1976d2;">Touch and drag</span> the basket to move.<br>
       <br>
-      <span style="font-size:1.3em;">Ready to play?</span>
+      <span style="font-size:1.3em; color:#ff9800;">Ready to play?</span>
     </p>
     <button id="startBtn">Start Game</button>
   </div>
@@ -78,14 +116,14 @@
     // --- GAME CONSTANTS ---
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    let W = canvas.width, H = canvas.height;
 
-    // For responsive design
+    // Responsive canvas sizing
     function resizeCanvas() {
       let ww = window.innerWidth, wh = window.innerHeight;
-      let scale = Math.min(ww / 480, wh / 720);
-      canvas.style.width = (480*scale) + 'px';
-      canvas.style.height = (720*scale) + 'px';
+      let cW = Math.min(ww * 0.98, 540);
+      let cH = Math.min(wh * 0.9, cW * 1.5, 900);
+      canvas.width = cW;
+      canvas.height = cH;
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
@@ -117,8 +155,8 @@
     let basket = [];
     let falling = [];
     let dropTick = 0;
-    let basketX = W/2, basketWidth = 90, basketHeight = 44;
-    let basketTargetX = basketX;
+    let basketX = 0, basketWidth = 0, basketHeight = 0;
+    let basketTargetX = 0;
     let touchOffset = 0;
     let redXTimer = 0;
     let confetti = [];
@@ -133,7 +171,10 @@
     function resetGame() {
       level = 0; score = 0; timer = LEVEL_TIME;
       basket = []; falling = []; dropTick = 0;
-      basketX = W/2; basketTargetX = basketX;
+      basketX = canvas.width/2;
+      basketTargetX = basketX;
+      basketWidth = Math.max(canvas.width * 0.25, 90);
+      basketHeight = Math.max(canvas.height * 0.06, 44);
       redXTimer = 0; confetti = [];
       message = "";
     }
@@ -168,9 +209,10 @@
       gameState = 'over';
       overlay.innerHTML = `
         <h1>${won ? "🎉 You Win! 🎉" : "Game Over"}</h1>
-        <p>Your Score: <b>${score}</b></p>
+        <p>Your Score: <b style="color:#009688;">${score}</b></p>
         <p>${won ? "You are a Smiley’s Fresh Champion!" : "Try again to beat your high score!"}</p>
-        <p style="font-size:1.3em;">Don’t forget to get a smoothie at Smiley’s Fresh!<br>🍓🥦🍌🥤</p>
+        <p style="font-size:1.3em; color:#ff9800;">Don’t forget to get a smoothie at Smiley’s Fresh!<br>🍓🥦🍌🥤</p>
+        <a href="https://smileys-fresh.com/" target="_blank">Visit Smiley’s Fresh!</a>
         <button id="restartBtn">Play Again</button>
       `;
       overlay.style.display = 'flex';
@@ -184,11 +226,11 @@
     function showPromo() {
       overlay.innerHTML = `
         <h2>Level ${level+1} Complete!</h2>
-        <p>Your Score: <b>${score}</b></p>
+        <p>Your Score: <b style="color:#009688;">${score}</b></p>
         <div style="font-size:1.2em;">
           Don’t forget to get a smoothie at Smiley’s Fresh!<br>
           <span style="color:#ff9800;">🍓🥦🍌🥤</span><br>
-          <b>Today’s Deal:</b> 2-for-1 Smoothies!
+          <b style="color:#ff5722;">Today’s Deal:</b> <span style="color:#1976d2;">2-for-1 Smoothies!</span>
         </div>
       `;
       overlay.style.display = 'flex';
@@ -218,7 +260,7 @@
       // Move basket
       basketX += (basketTargetX - basketX)*0.25;
       if (basketX < basketWidth/2) basketX = basketWidth/2;
-      if (basketX > W-basketWidth/2) basketX = W-basketWidth/2;
+      if (basketX > canvas.width-basketWidth/2) basketX = canvas.width-basketWidth/2;
       // Drop items
       dropTick++;
       if (dropTick >= LEVELS[level].dropRate) {
@@ -229,7 +271,7 @@
         } else {
           item = {...ITEMS[Math.floor(Math.random()*ITEMS.length)]};
         }
-        let x = Math.random()*(W-44)+22;
+        let x = Math.random()*(canvas.width-44)+22;
         falling.push({item, x, y: -30, speed: LEVELS[level].speed + Math.random()*1.2});
       }
       // Move falling items
@@ -237,7 +279,7 @@
         let f = falling[i];
         f.y += f.speed;
         // Check catch
-        if (f.y > H-90 && Math.abs(f.x-basketX) < basketWidth/2+16) {
+        if (f.y > canvas.height-basketHeight*2 && Math.abs(f.x-basketX) < basketWidth/2+16) {
           // Caught!
           if (f.item.golden) {
             score += 200;
@@ -259,7 +301,7 @@
             }
           }
           falling.splice(i,1);
-        } else if (f.y > H+40) {
+        } else if (f.y > canvas.height+40) {
           // Missed
           falling.splice(i,1);
         }
@@ -279,7 +321,7 @@
       for (let i=0;i<18;i++) {
         confetti.push({
           x: basketX,
-          y: H-70,
+          y: canvas.height-basketHeight*1.7,
           vx: Math.cos(i/3)*Math.random()*3,
           vy: -Math.abs(Math.sin(i/3)*Math.random()*3)-2,
           color: `hsl(${Math.random()*360},90%,60%)`,
@@ -290,20 +332,29 @@
 
     function draw() {
       // Background
-      ctx.clearRect(0,0,W,H);
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
       // Scoreboard
-      ctx.fillStyle = "#388e3c";
-      ctx.font = "bold 26px Comic Sans MS";
+      ctx.font = `bold ${Math.round(canvas.height*0.045)}px 'Baloo 2', Arial, sans-serif`;
       ctx.textAlign = "left";
-      ctx.fillText(`Score: ${score}`, 18, 38);
+      ctx.fillStyle = "#ff9800";
+      ctx.fillText(`Score:`, 18, 1+canvas.height*0.055);
+      ctx.fillStyle = "#009688";
+      ctx.fillText(`${score}`, 110, 1+canvas.height*0.055);
+
       ctx.textAlign = "center";
-      ctx.fillText(`Level ${level+1}`, W/2, 38);
+      ctx.fillStyle = "#1976d2";
+      ctx.fillText(`Level ${level+1}`, canvas.width/2, 1+canvas.height*0.055);
+
       ctx.textAlign = "right";
-      ctx.fillText(`Time: ${Math.ceil(timer)}`, W-18, 38);
+      ctx.fillStyle = "#388e3c";
+      ctx.fillText(`Time: ${Math.ceil(timer)}`, canvas.width-18, 1+canvas.height*0.055);
 
       // Draw falling items
       for (let f of falling) {
-        ctx.font = f.item.golden ? "32px Comic Sans MS" : "32px Comic Sans MS";
+        ctx.font = f.item.golden
+          ? `bold ${Math.round(canvas.height*0.06)}px 'Baloo 2', Arial, sans-serif`
+          : `${Math.round(canvas.height*0.05)}px 'Baloo 2', Arial, sans-serif`;
         ctx.textAlign = "center";
         ctx.globalAlpha = 1;
         ctx.fillText(f.item.emoji, f.x, f.y);
@@ -312,7 +363,7 @@
 
       // Basket
       ctx.save();
-      ctx.translate(basketX, H-60);
+      ctx.translate(basketX, canvas.height-basketHeight*1.2);
       // Basket base
       ctx.fillStyle = "#ffe082";
       ctx.beginPath();
@@ -323,7 +374,7 @@
       ctx.stroke();
       // Basket smile
       ctx.beginPath();
-      ctx.arc(0,6,22,Math.PI*0.15,Math.PI*0.85,false);
+      ctx.arc(0,6,Math.max(22, basketWidth/4),Math.PI*0.15,Math.PI*0.85,false);
       ctx.lineWidth = 3;
       ctx.strokeStyle = "#4caf50";
       ctx.stroke();
@@ -338,7 +389,7 @@
       for (let i=0;i<basket.length;i++) {
         let idx = ITEMS.findIndex(it=>it.name===basket[i]);
         let emoji = idx>=0 ? ITEMS[idx].emoji : "❓";
-        ctx.font = "28px Comic Sans MS";
+        ctx.font = `${Math.round(canvas.height*0.045)}px 'Baloo 2', Arial, sans-serif`;
         ctx.fillText(emoji, -24+24*i, -10);
       }
       ctx.restore();
@@ -350,10 +401,10 @@
         ctx.strokeStyle = "#f44336";
         ctx.lineWidth = 12;
         ctx.beginPath();
-        ctx.moveTo(W/2-40,H/2-40);
-        ctx.lineTo(W/2+40,H/2+40);
-        ctx.moveTo(W/2+40,H/2-40);
-        ctx.lineTo(W/2-40,H/2+40);
+        ctx.moveTo(canvas.width/2-40,canvas.height/2-40);
+        ctx.lineTo(canvas.width/2+40,canvas.height/2+40);
+        ctx.moveTo(canvas.width/2+40,canvas.height/2-40);
+        ctx.lineTo(canvas.width/2-40,canvas.height/2+40);
         ctx.stroke();
         ctx.restore();
       }
@@ -371,10 +422,10 @@
 
       // Message
       if (message) {
-        ctx.font = "bold 28px Comic Sans MS";
+        ctx.font = `bold ${Math.round(canvas.height*0.045)}px 'Baloo 2', Arial, sans-serif`;
         ctx.fillStyle = "#ff9800";
         ctx.textAlign = "center";
-        ctx.fillText(message, W/2, H/2-80);
+        ctx.fillText(message, canvas.width/2, canvas.height*0.2);
         if (Math.random()<0.02) message = ""; // Fade out
       }
     }
@@ -384,7 +435,7 @@
     function getTouchX(e) {
       let rect = canvas.getBoundingClientRect();
       let x = e.touches ? e.touches[0].clientX : e.clientX;
-      let scale = W / rect.width;
+      let scale = canvas.width / rect.width;
       return (x - rect.left) * scale;
     }
     canvas.addEventListener('touchstart', function(e){
@@ -432,7 +483,17 @@
     }, {passive:false});
 
     // --- Responsive resize on load ---
-    window.addEventListener('load', resizeCanvas);
+    window.addEventListener('load', () => {
+      resizeCanvas();
+      resetGame();
+      draw();
+    });
+
+    // --- Redraw on resize ---
+    window.addEventListener('resize', () => {
+      resetGame();
+      draw();
+    });
 
     // --- Draw initial screen ---
     draw();
